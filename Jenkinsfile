@@ -29,7 +29,7 @@ pipeline {
             steps {
                 withKubeConfig([credentialsId: 'kubeconfig', contentType: 'file']) {
                     kubernetesDeploy(
-                        configs: 'k8s/deployment.yaml,k8s/service.yaml',
+                        configs: 'k8s/deploysvc.yaml',
                         kubeconfigId: 'kubeconfig'
                     )
                 }
