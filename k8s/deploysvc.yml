@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wisecow-deployment
+  labels:
+    app: wisecow
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: wisecow
+  template:
+    metadata:
+      labels:
+        app: wisecow
+    spec:
+      containers:
+        - name: wisecow
+          image: uveshkhan/accuknox:v5  # Correct Docker image
+          ports:
+            - containerPort: 4499
+          command: ["/app/wisecow.sh"]
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wisecow-service
+spec:
+  type: NodePort  # Use LoadBalancer if on cloud
+  selector:
+    app: wisecow
+  ports:
+    - protocol: TCP
+      port: 4499
+      targetPort: 4499
+      nodePort: 30001
