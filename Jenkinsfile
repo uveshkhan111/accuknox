@@ -3,43 +3,49 @@ pipeline {
 
     environment {
         DOCKER_USER = "uveshkhan"
-        DOCKER_PASS = credentials('docker-hub-password') // Replace with your Jenkins DockerHub credentials ID
+        DOCKER_PASS = credentials('docker-hub-password') // Make sure this ID exists in Jenkins
         IMAGE_NAME = "uveshkhan/accuknox"
-        IMAGE_TAG  = "v5"
-        KUBE_CONFIG_CREDENTIALS = 'kubeconfig-cred-id' // Replace with your Jenkins kubeconfig credentials ID
+        IMAGE_TAG = "v5"
     }
 
     stages {
-        stage('Checkout SCM') {
+        stage('Checkout') {
             steps {
-                git url: 'https://github.com/uveshkhan111/accuknox.git', branch: 'main'
+                git(
+                    url: 'https://github.com/uveshkhan111/accuknox.git',
+                    branch: 'main'
+                )
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                script {
+                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                    sh "docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest"
+                }
             }
         }
 
         stage('Push Docker Image') {
             steps {
-                withCredentials([string(credentialsId: 'docker-hub-password', variable: 'DOCKER_PASS')]) {
-                    sh "echo \$DOCKER_PASS | docker login -u ${DOCKER_USER} --password-stdin"
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-password', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
+                        sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
+                        sh "docker push ${IMAGE_NAME}:latest"
+                    }
                 }
-                sh "docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest"
-                sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
-                sh "docker push ${IMAGE_NAME}:latest"
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                withKubeConfig([credentialsId: "${KUBE_CONFIG_CREDENTIALS}"]) {
-                    // Using kubectl inside a Docker container
-                    sh """
-                        docker run --rm -v \$HOME/.kube:/root/.kube bitnami/kubectl:latest apply -f k8s/deploysvc.yml
-                    """
+                script {
+                    // Make sure kubectl is installed on Jenkins agent
+                    withKubeConfig([credentialsId: 'kubeconfig-id']) {
+                        sh "kubectl apply -f k8s/deploysvc.yml"
+                    }
                 }
             }
         }
@@ -47,10 +53,10 @@ pipeline {
 
     post {
         success {
-            echo "Pipeline finished successfully!"
+            echo 'Pipeline completed successfully!'
         }
         failure {
-            echo "Pipeline failed!"
+            echo 'Pipeline failed!'
         }
     }
 }
