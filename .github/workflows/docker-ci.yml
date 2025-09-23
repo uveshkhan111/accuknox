@@ -1,4 +1,4 @@
-name: Build, Push Docker & Deploy to Kubernetes
+name: Docker Build, Push & Deploy to Kubernetes
 
 # Trigger workflow on push to main branch
 on:
@@ -27,7 +27,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Step 4: Build and push Docker image with version tag
+      # Step 4: Build and push Docker image with version tags
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
@@ -53,18 +53,23 @@ jobs:
         with:
           version: 'latest'
 
-      # Step 3: Decode kubeconfig
+      # Step 3: Create .kube directory and decode kubeconfig
       - name: Set kubeconfig
         run: |
+          mkdir -p $HOME/.kube
           echo "${{ secrets.KUBE_CONFIG_DATA }}" | base64 --decode > $HOME/.kube/config
 
-      # Step 4: Update Kubernetes deployment image
+      # Step 4: Test kubectl connection
+      - name: Test kubectl connection
+        run: kubectl get nodes
+
+      # Step 5: Deploy new Docker image
       - name: Deploy to Kubernetes
         run: |
           kubectl set image deployment/wisecow-deployment wisecow=${{ secrets.DOCKER_USERNAME }}/wisecow:${{ github.sha }}
           kubectl rollout status deployment/wisecow-deployment --timeout=120s
 
-      # Step 5: Optional rollback if deployment fails
+      # Step 6: Rollback if deployment fails
       - name: Rollback on failure
         if: failure()
         run: |
