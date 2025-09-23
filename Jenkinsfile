@@ -27,7 +27,7 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                withKubeConfig([credentialsId: 'kubeconfig', contentType: 'file']) {
+                withKubeConfig([credentialsId: 'kubeconfig']) {
                     kubernetesDeploy(
                         configs: 'k8s/deploysvc.yml',
                         kubeconfigId: 'kubeconfig'
