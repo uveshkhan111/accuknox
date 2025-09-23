@@ -10,35 +10,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout code
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    # Step 1: Checkout the repo
+    - name: Checkout Code
+      uses: actions/checkout@v3
 
-      # Step 2: Log in to Docker Hub
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+    # Step 2: Log in to Docker Hub
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Step 3: Build Docker image
-      - name: Build Docker image
-        run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/accuknox:v1 .
+    # Step 3: Build Docker image
+    - name: Build Docker Image
+      run: |
+        docker build -t ${{ secrets.DOCKER_USERNAME }}/accuknox:v5 .
+        docker tag ${{ secrets.DOCKER_USERNAME }}/accuknox:v5 ${{ secrets.DOCKER_USERNAME }}/accuknox:latest
 
-      # Step 4: Push Docker image
-      - name: Push Docker image
-        run: |
-          docker push ${{ secrets.DOCKER_USERNAME }}/accuknox:v1
+    # Step 4: Push Docker image to Docker Hub
+    - name: Push Docker Image
+      run: |
+        docker push ${{ secrets.DOCKER_USERNAME }}/accuknox:v5
+        docker push ${{ secrets.DOCKER_USERNAME }}/accuknox:latest
 
-      # Step 5: Set up kubeconfig
-      - name: Set up Kubeconfig
-        run: |
-          echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig
-          export KUBECONFIG=kubeconfig
+    # Step 5: Set up kubeconfig
+    - name: Set up Kubeconfig
+      run: |
+        mkdir -p $HOME/.kube
+        echo "${{ secrets.KUBE_CONFIG_DATA }}" > $HOME/.kube/config
 
-      # Step 6: Deploy to Kubernetes
-      - name: Deploy to Kubernetes
-        run: |
-          kubectl apply -f k8s/deploysvc.yml
-
+    # Step 6: Deploy to Kubernetes
+    - name: Deploy to Kubernetes
+      run: |
+        kubectl apply -f k8s/deploysvc.yml
