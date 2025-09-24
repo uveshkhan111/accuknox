@@ -10,5 +10,5 @@ spec:
     app: wisecow
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 5000   # must match containerPort in deploy.yml
+      port: 80         # Public port for browser access
+      targetPort: 4499 # Must match containerPort in deploy.yml
