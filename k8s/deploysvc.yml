@@ -18,7 +18,7 @@ spec:
         - name: wisecow
           image: uveshkhan/wisecow:latest
           ports:
-            - containerPort: 5000   # change if your app uses another port
+            - containerPort: 4499
           resources:
             limits:
               memory: "512Mi"
@@ -26,6 +26,3 @@ spec:
             requests:
               memory: "256Mi"
               cpu: "250m"
-          env:
-            - name: ENV
-              value: "production"
