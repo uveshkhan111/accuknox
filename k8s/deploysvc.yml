@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: wisecow-deployment
+  labels:
+    app: wisecow
 spec:
   replicas: 2
   selector:
@@ -13,21 +15,17 @@ spec:
         app: wisecow
     spec:
       containers:
-      - name: wisecow
-        image: uveshkhan/wisecow:latest
-        ports:
-        - containerPort: 80
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: wisecow-service
-spec:
-  type: LoadBalancer
-  selector:
-    app: wisecow
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
-
+        - name: wisecow
+          image: uveshkhan/wisecow:latest
+          ports:
+            - containerPort: 5000   # change if your app uses another port
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+          env:
+            - name: ENV
+              value: "production"
